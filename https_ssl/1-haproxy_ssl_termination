@@ -1,19 +1,32 @@
-frontend www-http
+global
+        daemon
+        maxconn 256
+
+defaults
+        mode http
+        timeout connect 5000ms
+        timeout client 50000ms
+        timeout server 50000ms
+
+frontend http-in
         bind *:80
+        bind *:443 ssl crt /etc/letsencrypt/live/www.aloice.tech/fullchain.pem
         mode http
         default_backend web-backend
 
-frontend www-https
-        bind *:433 crt /etc/letsencrypt/live/aloice.tech/fullchain.pem
-        http-request set-header X-Forwarded-Proto https
-        acl letsencrypt-acl path_beg /.well-known/acme-challenge/
-        use_backend letsencrypt-backend if letsencrypt-acl
+frontend https_frontend
+        bind *:443 ssl crt /etc/letsencrypt/live/www.aloice.tech/fullchain.pem
+        mode http
         default_backend web-backend
 
+
+#frontend http_frontend
+        #bind *:80
+        #mode http
+        #option httplog
+        #default_backend web-backend 
+
 backend web-backend
-        redirect scheme https unless { ssl_fc }
         balance roundrobin
         server 5776-web-01 18.215.167.27:80 check
         server 5776-web-02 54.234.55.207:80 check
-backend letsencrypt-backend
-        server letsencrypt 127.0.0.1:54321
